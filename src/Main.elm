@@ -4,6 +4,7 @@ import Dict exposing (Dict)
 import Html exposing (Html, button, div, input, text, textarea)
 import Html.Attributes exposing (style, value)
 import Html.Events exposing (onClick, onInput)
+import Json.Encode as Json
 import Random
 import Random.Set as Set
 import Set exposing (Set)
@@ -42,6 +43,11 @@ init =
 
 type alias Square =
     ( Int, Int )
+
+
+toSquareIdString : Square -> String
+toSquareIdString ( x, y ) =
+    (toString x) ++ "," ++ (toString y)
 
 
 runPrim : Int -> Cmd Msg
@@ -154,10 +160,16 @@ update msg model =
 
         PrimNextVisit Nothing ->
             let
+                output =
+                    Dict.toList model.visited
+                        |> List.map (\( k, v ) -> ( toSquareIdString k, List.map (\w -> Json.string w) v |> Json.list ))
+                        |> Json.object
+                        |> Json.encode 0
+
                 _ =
                     Debug.log "Next" "Done"
             in
-                ( model, Cmd.none )
+                ( { model | output = output }, Cmd.none )
 
         PrimOpenWall sourceSquare (Just targetSquare) ->
             let
