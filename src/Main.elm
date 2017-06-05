@@ -20,20 +20,24 @@ main =
         }
 
 
+type alias Square =
+    ( Int, Int )
+
+
+type alias Openings =
+    List String
+
+
+type alias DictOpenings =
+    Dict Square Openings
+
+
 type alias Model =
     { size : Int
     , toVisit : Set Square
-    , visited : DictWalls
+    , visited : DictOpenings
     , output : String
     }
-
-
-type alias DictWalls =
-    Dict Square Walls
-
-
-type alias Walls =
-    List String
 
 
 init : ( Model, Cmd Msg )
@@ -41,12 +45,8 @@ init =
     ( { size = 3, toVisit = Set.empty, visited = Dict.empty, output = "" }, Cmd.none )
 
 
-type alias Square =
-    ( Int, Int )
-
-
-toSquareIdString : Square -> String
-toSquareIdString ( x, y ) =
+squareIdString : Square -> String
+squareIdString ( x, y ) =
     (toString x) ++ "," ++ (toString y)
 
 
@@ -74,11 +74,11 @@ findNeighbors maxSize square =
         List.filter (\( x, y ) -> x >= 0 && x < maxSize && y >= 0 && y < maxSize) neighbors
 
 
-openWall : Square -> Square -> DictWalls -> Walls
-openWall source target dictWalls =
+openWall : Square -> Square -> DictOpenings -> Openings
+openWall source target dictOpenings =
     let
-        sourceWalls =
-            Dict.get source dictWalls |> Maybe.withDefault []
+        sourceOpenings =
+            Dict.get source dictOpenings |> Maybe.withDefault []
 
         ( sourceX, sourceY ) =
             source
@@ -87,13 +87,13 @@ openWall source target dictWalls =
             target
     in
         if sourceX > targetX then
-            "W" :: sourceWalls
+            "W" :: sourceOpenings
         else if sourceX < targetX then
-            "E" :: sourceWalls
+            "E" :: sourceOpenings
         else if sourceY > targetY then
-            "N" :: sourceWalls
+            "N" :: sourceOpenings
         else
-            "S" :: sourceWalls
+            "S" :: sourceOpenings
 
 
 type Msg
@@ -162,7 +162,7 @@ update msg model =
             let
                 output =
                     Dict.toList model.visited
-                        |> List.map (\( k, v ) -> ( toSquareIdString k, List.map (\w -> Json.string w) v |> Json.list ))
+                        |> List.map (\( k, v ) -> ( squareIdString k, List.map (\w -> Json.string w) v |> Json.list ))
                         |> Json.object
                         |> Json.encode 0
 
@@ -176,14 +176,14 @@ update msg model =
                 _ =
                     Debug.log "PrimOpenWall" (toString sourceSquare ++ " -> " ++ toString targetSquare)
 
-                sourceWalls =
+                sourceOpenings =
                     openWall sourceSquare targetSquare model.visited
 
-                targetWalls =
+                targetOpenings =
                     openWall targetSquare sourceSquare model.visited
 
                 dictUpdate =
-                    Dict.fromList [ ( sourceSquare, sourceWalls ), ( targetSquare, targetWalls ) ]
+                    Dict.fromList [ ( sourceSquare, sourceOpenings ), ( targetSquare, targetOpenings ) ]
 
                 visited =
                     Dict.union dictUpdate model.visited
