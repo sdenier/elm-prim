@@ -3,35 +3,29 @@ module Tests exposing (..)
 import Test exposing (..)
 import Expect
 import Fuzz exposing (list, int, tuple, string)
-import String
+import PrimMaze exposing (..)
 
 
 all : Test
 all =
-    describe "Sample Test Suite"
-        [ describe "Unit test examples"
-            [ test "Addition" <|
+    describe "Maze Generation with Prim's Algorithm"
+        [ describe "squareIdString"
+            [ test "transforms square coordinates into an id string" <|
                 \() ->
-                    Expect.equal (3 + 7) 10
-            , test "String.left" <|
-                \() ->
-                    Expect.equal "a" (String.left 1 "abcdefg")
-            , test "This test should fail - you should remove it" <|
-                \() ->
-                    Expect.fail "Failed as expected!"
+                    Expect.equal "3,7" (squareIdString ( 3, 7 ))
+            , fuzz2 int int "concatenates both coordinates to create the id" <|
+                \x y ->
+                    (squareIdString ( x, y )) |> Expect.equal ((toString x) ++ "," ++ (toString y))
             ]
-        , describe "Fuzz test examples, using randomly generated input"
-            [ fuzz (list int) "Lists always have positive length" <|
-                \aList ->
-                    List.length aList |> Expect.atLeast 0
-            , fuzz (list int) "Sorting a list does not change its length" <|
-                \aList ->
-                    List.sort aList |> List.length |> Expect.equal (List.length aList)
-            , fuzzWith { runs = 1000 } int "List.member will find an integer in a list containing it" <|
-                \i ->
-                    List.member i [ i ] |> Expect.true "If you see this, List.member returned False!"
-            , fuzz2 string string "The length of a string equals the sum of its substrings' lengths" <|
-                \s1 s2 ->
-                    s1 ++ s2 |> String.length |> Expect.equal (String.length s1 + String.length s2)
+        , describe "findNeighbors"
+            [ test "gives the 4 neighbours around the give square" <|
+                \() ->
+                    (findNeighbors 4 ( 2, 1 )) |> Expect.equal [ ( 1, 1 ), ( 3, 1 ), ( 2, 0 ), ( 2, 2 ) ]
+            , test "excludes neighbours out of maze bounds" <|
+                \() ->
+                    (findNeighbors 4 ( 0, 0 )) |> Expect.equal [ ( 1, 0 ), ( 0, 1 ) ]
+            , test "excludes neighbours out of maze bounds" <|
+                \() ->
+                    (findNeighbors 4 ( 3, 3 )) |> Expect.equal [ ( 2, 3 ), ( 3, 2 ) ]
             ]
         ]
