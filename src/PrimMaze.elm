@@ -115,17 +115,8 @@ update msg model =
                 _ =
                     Debug.log "PrimOpenWall" (toString sourceSquare ++ " -> " ++ toString targetSquare)
 
-                sourceOpenings =
-                    openWall sourceSquare targetSquare model.visited
-
-                targetOpenings =
-                    openWall targetSquare sourceSquare model.visited
-
-                dictUpdate =
-                    Dict.fromList [ ( sourceSquare, sourceOpenings ), ( targetSquare, targetOpenings ) ]
-
                 visited =
-                    Dict.union dictUpdate model.visited
+                    updateOpenings sourceSquare targetSquare model.visited
 
                 newModel =
                     { model | visited = visited }
@@ -168,6 +159,24 @@ findNeighbors maxSize square =
             Set.fromList [ ( x - 1, y ), ( x + 1, y ), ( x, y - 1 ), ( x, y + 1 ) ]
     in
         Set.filter (\( x, y ) -> x >= 0 && x < maxSize && y >= 0 && y < maxSize) neighbors
+
+
+updateOpenings : Square -> Square -> DictOpenings -> DictOpenings
+updateOpenings source target openings =
+    let
+        sourceOpenings =
+            openWall source target openings
+
+        targetOpenings =
+            openWall target source openings
+
+        dictUpdate =
+            Dict.fromList [ ( source, sourceOpenings ), ( target, targetOpenings ) ]
+
+        visited =
+            Dict.union dictUpdate openings
+    in
+        visited
 
 
 openWall : Square -> Square -> DictOpenings -> Openings
