@@ -4,6 +4,7 @@ import Test exposing (..)
 import Expect
 import Fuzz exposing (list, int, tuple, string)
 import PrimMaze exposing (..)
+import Set exposing (Set)
 
 
 all : Test
@@ -20,12 +21,24 @@ all =
         , describe "findNeighbors"
             [ test "gives the 4 neighbours around the give square" <|
                 \() ->
-                    (findNeighbors 4 ( 2, 1 )) |> Expect.equal [ ( 1, 1 ), ( 3, 1 ), ( 2, 0 ), ( 2, 2 ) ]
+                    let
+                        expected =
+                            Set.fromList [ ( 1, 1 ), ( 3, 1 ), ( 2, 0 ), ( 2, 2 ) ]
+                    in
+                        (findNeighbors 4 ( 2, 1 )) |> Expect.equal expected
             , test "excludes neighbours out of maze bounds" <|
                 \() ->
-                    (findNeighbors 4 ( 0, 0 )) |> Expect.equal [ ( 1, 0 ), ( 0, 1 ) ]
+                    let
+                        expected =
+                            Set.fromList [ ( 1, 0 ), ( 0, 1 ) ]
+                    in
+                        (findNeighbors 4 ( 0, 0 )) |> Expect.equal expected
             , test "excludes neighbours out of maze bounds" <|
                 \() ->
-                    (findNeighbors 4 ( 3, 3 )) |> Expect.equal [ ( 2, 3 ), ( 3, 2 ) ]
+                    let
+                        expected =
+                            Set.fromList [ ( 2, 3 ), ( 3, 2 ) ]
+                    in
+                        (findNeighbors 4 ( 3, 3 )) |> Expect.equal expected
             ]
         ]

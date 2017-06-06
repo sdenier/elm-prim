@@ -62,7 +62,7 @@ update msg model =
                     Dict.singleton square []
 
                 toVisit =
-                    Set.fromList (findNeighbors model.size square)
+                    findNeighbors model.size square
 
                 newModel =
                     { model | toVisit = toVisit, visited = visited, output = (toString square) }
@@ -81,7 +81,7 @@ update msg model =
                     Dict.insert square [] model.visited
 
                 neighbors =
-                    Set.fromList (findNeighbors model.size square)
+                    findNeighbors model.size square
 
                 ( visitedNeighbors, toVisitNeighbors ) =
                     Set.partition (\s -> Dict.member s model.visited) neighbors
@@ -158,16 +158,16 @@ runPrim mazeSize =
         Random.generate PrimInit squareGen
 
 
-findNeighbors : Int -> Square -> List Square
+findNeighbors : Int -> Square -> Set Square
 findNeighbors maxSize square =
     let
         ( x, y ) =
             square
 
         neighbors =
-            [ ( x - 1, y ), ( x + 1, y ), ( x, y - 1 ), ( x, y + 1 ) ]
+            Set.fromList [ ( x - 1, y ), ( x + 1, y ), ( x, y - 1 ), ( x, y + 1 ) ]
     in
-        List.filter (\( x, y ) -> x >= 0 && x < maxSize && y >= 0 && y < maxSize) neighbors
+        Set.filter (\( x, y ) -> x >= 0 && x < maxSize && y >= 0 && y < maxSize) neighbors
 
 
 openWall : Square -> Square -> DictOpenings -> Openings
