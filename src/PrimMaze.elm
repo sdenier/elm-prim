@@ -108,10 +108,7 @@ update msg model =
                     List.append model.history [ "Done" ]
 
                 output =
-                    Dict.toList model.visited
-                        |> List.map (\( k, v ) -> ( squareIdString k, List.map (\w -> Json.string w) v |> Json.list ))
-                        |> Json.object
-                        |> Json.encode 0
+                    exportJsonOutput model.visited
             in
                 ( { model | output = output, history = history }, Cmd.none )
 
@@ -200,9 +197,19 @@ openWall source target dictOpenings =
             "S" :: sourceOpenings
 
 
-squareIdString : Square -> String
-squareIdString ( x, y ) =
-    (toString x) ++ "," ++ (toString y)
+exportJsonOutput : DictOpenings -> String
+exportJsonOutput visited =
+    let
+        squareIdString =
+            \( x, y ) -> (toString x) ++ "," ++ (toString y)
+
+        mapOpeningsToJsonList =
+            \openings -> List.map (\opening -> Json.string opening) openings |> Json.list
+    in
+        Dict.toList visited
+            |> List.map (\( sq, openings ) -> ( squareIdString sq, mapOpeningsToJsonList openings ))
+            |> Json.object
+            |> Json.encode 0
 
 
 

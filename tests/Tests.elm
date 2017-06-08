@@ -2,7 +2,6 @@ module Tests exposing (..)
 
 import Test exposing (..)
 import Expect
-import Fuzz exposing (list, int, tuple, string)
 import PrimMaze exposing (..)
 import Dict exposing (Dict)
 import Set exposing (Set)
@@ -11,22 +10,10 @@ import Set exposing (Set)
 all : Test
 all =
     describe "Maze Generation with Prim's Algorithm"
-        [ test_squareIdString
-        , test_findNeighbors
+        [ test_findNeighbors
         , test_openWall
         , test_updateOpenings
-        ]
-
-
-test_squareIdString : Test
-test_squareIdString =
-    describe "squareIdString"
-        [ test "transforms square coordinates into an id string" <|
-            \() ->
-                Expect.equal "3,7" (squareIdString ( 3, 7 ))
-        , fuzz2 int int "concatenates both coordinates to create the id" <|
-            \x y ->
-                (squareIdString ( x, y )) |> Expect.equal ((toString x) ++ "," ++ (toString y))
+        , test_exportJsonOutput
         ]
 
 
@@ -120,4 +107,25 @@ test_updateOpenings =
                         Dict.fromList [ ( source, [ "E", "N" ] ), ( target, [ "W" ] ), ( ( 1, 0 ), [ "S" ] ) ]
                 in
                     Expect.equal expectedOpenings (updateOpenings source target openings)
+        ]
+
+
+test_exportJsonOutput : Test
+test_exportJsonOutput =
+    describe "exportJsonOutput"
+        [ test "exports maze data structure as Json" <|
+            \() ->
+                let
+                    expectedOutput =
+                        "{\"0,0\":[\"E\",\"S\"],\"0,1\":[\"N\",\"E\"],\"1,0\":[\"W\"],\"1,1\":[\"W\"]}"
+
+                    mazeOpenings =
+                        Dict.fromList
+                            [ ( ( 0, 0 ), [ "E", "S" ] )
+                            , ( ( 1, 0 ), [ "W" ] )
+                            , ( ( 0, 1 ), [ "N", "E" ] )
+                            , ( ( 1, 1 ), [ "W" ] )
+                            ]
+                in
+                    Expect.equal expectedOutput (exportJsonOutput mazeOpenings)
         ]
