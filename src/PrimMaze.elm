@@ -19,17 +19,22 @@ type alias DictOpenings =
     Dict Square Openings
 
 
+type alias Event =
+    String
+
+
 type alias Model =
     { size : Int
     , toVisit : Set Square
     , visited : DictOpenings
     , output : String
+    , history : List Event
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { size = 3, toVisit = Set.empty, visited = Dict.empty, output = "" }, Cmd.none )
+    ( { size = 3, toVisit = Set.empty, visited = Dict.empty, output = "", history = [] }, Cmd.none )
 
 
 type Msg
@@ -55,8 +60,8 @@ update msg model =
 
         PrimInit square ->
             let
-                _ =
-                    Debug.log "PrimInit" (toString square)
+                history =
+                    [ eventInit square model ]
 
                 visited =
                     Dict.singleton square []
@@ -65,7 +70,7 @@ update msg model =
                     findNeighbors model.size square
 
                 newModel =
-                    { model | toVisit = toVisit, visited = visited, output = (toString square) }
+                    { model | toVisit = toVisit, visited = visited, history = history }
 
                 nextStep =
                     Random.generate PrimNextVisit (Set.sample toVisit)
@@ -74,8 +79,8 @@ update msg model =
 
         PrimNextVisit (Just square) ->
             let
-                _ =
-                    Debug.log "PrimNextVisit" (toString square ++ " " ++ (toString visitedNeighbors) ++ " " ++ (toString toVisitNeighbors))
+                history =
+                    List.append model.history [ eventNextVisit square model ]
 
                 visited =
                     Dict.insert square [] model.visited
@@ -90,7 +95,7 @@ update msg model =
                     Set.union (Set.remove square model.toVisit) toVisitNeighbors
 
                 newModel =
-                    { model | toVisit = toVisit, visited = visited, output = (toString square) }
+                    { model | toVisit = toVisit, visited = visited, history = history }
 
                 nextStep =
                     Random.generate (PrimOpenWall square) (Set.sample visitedNeighbors)
@@ -99,35 +104,29 @@ update msg model =
 
         PrimNextVisit Nothing ->
             let
+                history =
+                    List.append model.history [ "Done" ]
+
                 output =
                     Dict.toList model.visited
                         |> List.map (\( k, v ) -> ( squareIdString k, List.map (\w -> Json.string w) v |> Json.list ))
                         |> Json.object
                         |> Json.encode 0
-
-                _ =
-                    Debug.log "Next" "Done"
             in
-                ( { model | output = output }, Cmd.none )
+                ( { model | output = output, history = history }, Cmd.none )
 
         PrimOpenWall sourceSquare (Just targetSquare) ->
             let
-                _ =
-                    Debug.log "PrimOpenWall" (toString sourceSquare ++ " -> " ++ toString targetSquare)
+                history =
+                    List.append model.history [ eventOpenWall sourceSquare targetSquare ]
 
                 visited =
                     updateOpenings sourceSquare targetSquare model.visited
 
-                newModel =
-                    { model | visited = visited }
-
                 nextStep =
                     Random.generate PrimNextVisit (Set.sample model.toVisit)
-
-                _ =
-                    Debug.log "PrimOpenWall" visited
             in
-                ( newModel, nextStep )
+                ( { model | visited = visited, history = history }, nextStep )
 
         PrimOpenWall _ Nothing ->
             let
@@ -204,3 +203,46 @@ openWall source target dictOpenings =
 squareIdString : Square -> String
 squareIdString ( x, y ) =
     (toString x) ++ "," ++ (toString y)
+
+
+
+-- Functions for logging Prim's Algorithm steps (events)
+
+
+eventInit : Square -> Model -> String
+eventInit square model =
+    let
+        totalSquare =
+            model.size * model.size
+    in
+        "InitWith " ++ toString square ++ " - total square = " ++ (toString totalSquare)
+
+
+eventNextVisit : Square -> Model -> String
+eventNextVisit square model =
+    let
+        toGo =
+            Set.size model.toVisit
+
+        done =
+            Dict.size model.visited
+
+        totalSquare =
+            model.size * model.size
+
+        toDo =
+            totalSquare - toGo - done
+    in
+        "NextVisit: "
+            ++ toString square
+            ++ " - to do = "
+            ++ (toString toDo)
+            ++ ", to go = "
+            ++ (toString toGo)
+            ++ ", done = "
+            ++ (toString done)
+
+
+eventOpenWall : Square -> Square -> String
+eventOpenWall sourceSquare targetSquare =
+    "OpenWall " ++ toString sourceSquare ++ " -> " ++ toString targetSquare

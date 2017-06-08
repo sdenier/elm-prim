@@ -28,8 +28,16 @@ view model =
             ]
         , Html.hr [] []
         , div []
-            [ textarea [ style [ ( "width", "500px" ), ( "height", "300px" ) ] ]
+            [ textarea [ style [ ( "width", "500px" ), ( "height", "200px" ) ] ]
                 [ text model.output
                 ]
             ]
+        , Html.hr [] []
+        , div []
+            (List.map viewEvent model.history)
         ]
+
+
+viewEvent : Event -> Html Msg
+viewEvent event =
+    div [] [ text event ]
